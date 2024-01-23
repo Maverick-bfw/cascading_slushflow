@@ -1,23 +1,28 @@
+from osgeo import gdal
 import rasterio
 from rasterio.windows import Window
 import numpy as np
 import pickle
+from pathlib import Path
 
-file_path = "/home/chris/OneDrive/cascading_slushflow/lakes/fonnbu/"
+# Paths to the input files
+#file_path = Path("/home/chris/OneDrive/cascading_slushflow/") # linux path
+file_path = Path("C:/Users/cda055/OneDrive - UiT Office 365/cascading_slushflow/") # windows path
 
-# Paths to input files
-lakes_raster_path = file_path + "fonnbu_lakes.tif"
-avalanche_raster_path = file_path + "fonnbu_avalanche.tif"
-output_updated_raster_path =file_path + "fonnbu_union_result.tif"
+avalanche_raster_path = file_path / Path("Flow-py_18deg_avalanche/flow-py-norway_travel_angle_18.tif")
+lakes_raster_path = file_path / "output_rasterized_lakes.tif"
+
+
+output_updated_raster_path = file_path / "fonnbu_union_result.tif"
 
 
 # Open the lakes raster
-with rasterio.open(lakes_raster_path) as lakes_raster:
+with rasterio.open(str(lakes_raster_path)) as lakes_raster:
     # Read the lakes raster data as a NumPy array
     lakes_data = lakes_raster.read(1)
 
     # Open the avalanche raster
-    with rasterio.open(avalanche_raster_path) as avalanche_raster:
+    with rasterio.open(str(avalanche_raster_path)) as avalanche_raster:
         # Read the avalanche raster data as a NumPy array
         avalanche_data = avalanche_raster.read(1)
 
@@ -29,5 +34,5 @@ with rasterio.open(lakes_raster_path) as lakes_raster:
         meta.update({'dtype': 'uint8'})
 
         # Write the result data to a new GeoTIFF file
-        with rasterio.open(output_updated_raster_path, 'w', **meta) as output_raster:
+        with rasterio.open(str(output_updated_raster_path), 'w', **meta) as output_raster:
             output_raster.write(result_data, 1)

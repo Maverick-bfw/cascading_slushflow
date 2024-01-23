@@ -1,7 +1,7 @@
 import rasterio
 from rasterio.features import geometry_mask
 import numpy as np
-
+from osgeo import gdal
 import rasterio
 from rasterio.features import shapes
 from scipy import ndimage
