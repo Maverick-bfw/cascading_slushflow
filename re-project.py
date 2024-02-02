@@ -1,4 +1,4 @@
-from osgeo import gdal
+import gdal
 from pathlib import Path
 def clip_raster(input_raster_path, output_raster_path, extent):
     # Open the input raster

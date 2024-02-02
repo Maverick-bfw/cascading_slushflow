@@ -1,3 +1,59 @@
+import geopandas as gpd
+import rasterio
+from rasterio import features
+from rasterio.transform import from_origin
+from rasterio.enums import Resampling
+import numpy as np
+"""
+This code reads in Fonnbus lake shape file and transforms it into a Raster.tif file. 
+The lake ID "FID" is saved in the raster cells so each lake can be picked out easy with a loop in the next processing steps
+The dem_raster_path is not a dem but the Flow-py avalnche layer and was used to get a raster to snap to. 
+"""
+# Paths to your shapefile and DEM raster
+shapefile_path = r"D:\cascading_slushflow\fonnbu\Fonnbu_lakes.shp"
+dem_raster_path = r"D:\cascading_slushflow\fonnbu\fonnbu_avalanche.tif"
+output_raster_path = r"D:\cascading_slushflow\fonnbu\output_lakes_raster.tif"
+
+# Read the shapefile
+gdf = gpd.read_file(shapefile_path)
+
+# Open the DEM raster to get its properties
+with rasterio.open(dem_raster_path) as dem_src:
+    dem_profile = dem_src.profile
+    dem_transform = dem_src.transform
+    dem_crs = dem_src.crs
+    dem_shape = dem_src.shape
+
+# Create a blank raster with a single band
+output_profile = dem_profile.copy()
+output_profile.update(count=1, dtype='uint32')  # Assuming unique IDs are integers
+
+# Use an in-memory raster to store the resampled data
+resampled_data = np.empty((1, dem_shape[0], dem_shape[1]), dtype='uint32')
+
+with rasterio.open(output_raster_path, 'w', **output_profile) as dst:
+    for idx, lake_id in enumerate(gdf['FID'].unique(), start=1):
+        # Select polygons for the current lake ID
+        subset_gdf = gdf[gdf['FID'] == lake_id]
+
+        # Create a mask for the current lake
+        mask = features.geometry_mask(subset_gdf['geometry'], out_shape=dem_shape, transform=dem_transform, invert=True)
+
+        # Set the pixels corresponding to the lake to the lake's unique ID
+        dst.write(np.where(mask, lake_id, dst.nodata), 1)
+
+    # Optionally, resample the output raster
+    rasterio.warp.reproject(dst.read(1), resampled_data, src_transform=dem_transform, dst_transform=dem_transform,
+                            src_crs=dem_crs, dst_crs=dem_crs, resampling=Resampling.nearest)
+
+# Write the resampled data to the output raster
+with rasterio.open(output_raster_path, 'r+') as dst:
+    dst.write(resampled_data)
+
+
+
+"""
+# OLD VERSION OF CODE
 from osgeo import gdal, ogr, osr
 from pathlib import Path
 
@@ -41,3 +97,4 @@ gdal.RasterizeLayer(target_ds, [1], lakes_layer, burn_values=[1])
 target_ds = None
 lakes_ds = None
 avalanche_ds = None
+"""
