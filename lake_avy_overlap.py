@@ -1,6 +1,11 @@
 import rasterio
 import numpy as np
 
+"""
+This code calls in the lakes and avalanche runout rasters 
+The spatial intersection between them in calculated and saved in the output raster.
+The value of the output raster is the unique lake ID
+"""
 # Paths to the raster files
 lakes_raster_path = "/media/snowman/LaCie/cascading_slushflow/fonnbu/output_lakes_raster.tif"
 avalanche_raster_path = "/media/snowman/LaCie/cascading_slushflow/fonnbu/Fonnbu_avalanche.tif"

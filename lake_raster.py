@@ -2,7 +2,11 @@ import geopandas as gpd
 import rasterio
 from rasterio import features
 import numpy as np
-
+"""
+This code calls in the shapefile of the lakes and converts it to a raster (.tif) file
+The Avalanche.tif file is used as a guide raster to snap to.
+The value of each lake is in the output raster is the unique lake ID. 
+"""
 # Paths to your shapefile and DEM raster
 shapefile_path = r"/media/snowman/LaCie/cascading_slushflow/fonnbu/Fonnbu_lakes.shp"
 dem_raster_path = r"/media/snowman/LaCie/cascading_slushflow/fonnbu/fonnbu_avalanche.tif"

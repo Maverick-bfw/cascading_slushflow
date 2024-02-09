@@ -6,6 +6,11 @@ import numpy as np
 lakes_raster_path = "/media/snowman/LaCie/cascading_slushflow/fonnbu/output_lakes_raster.tif"
 output_combined_path = "/media/snowman/LaCie/cascading_slushflow/fonnbu/output_combined.tif"
 
+"""
+This code calls in the lakes raster and the intersection raster (lakes and avalanche runout)
+A  bar graph (hacked histogram) is calculated showing the number of cells in a lake 
+and the number of raster cells that are hit by the avalnche runout layer.
+"""
 # Function to read raster values and flatten the array
 def read_raster_values(raster_path):
     with rasterio.open(raster_path) as src:

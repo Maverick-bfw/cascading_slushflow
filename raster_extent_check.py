@@ -1,5 +1,9 @@
 import rasterio
 
+"""
+This code reads in two raster files and makes sure they are 
+the same resolution, extent and snapped to each other.
+"""
 def check_raster_properties(raster_path):
     with rasterio.open(raster_path) as src:
         resolution = src.res
