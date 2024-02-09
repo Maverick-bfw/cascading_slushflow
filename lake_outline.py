@@ -1,62 +1,84 @@
 import rasterio
-from rasterio.windows import Window
 import numpy as np
+from skimage.morphology import erosion, label
 
-def get_lowest_neighbor_elevation(dem, mask):
-    # Define a neighborhood window (e.g., 3x3)
-    neighborhood = np.ones((3, 3))
-
-    # Mask the DEM with the neighborhood
-    dem_masked = np.where(mask, dem, np.nan)
-
-    # Find the minimum elevation in the neighborhood
-    lowest_neighbor_elevation = np.nanmin(dem_masked)
-
-    return lowest_neighbor_elevation
-
-# Paths to input and output raster files
-dem_files = [
-    "/media/snowman/LaCie/cascading_slushflow/fonnbu/dtm10/metadata/dtm10_6801_4_10m_z33.tif",
-    "/media/snowman/LaCie/cascading_slushflow/fonnbu/dtm10/metadata/dtm10_6800_1_10m_z33.tif"
-]
+# Open the lake raster file
 lake_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/output_lakes_raster.tif"
-output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/lowest_elevation_around_lake.tif"
+output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings.tif"
 
-# Open lake raster file
+
 with rasterio.open(lake_file) as lake_src:
-    # Read lake raster data
-    lake = lake_src.read(1)
-    profile = lake_src.profile  # Get profile from lake raster for output raster
+    lake = lake_src.read(1)  # Read lake raster data
+    profile = lake_src.profile  # Get profile from the lake raster for output raster
 
-    # Initialize a new array for the output raster with NoData values
-    output_data = np.full_like(lake, fill_value=profile["nodata"], dtype=profile["dtype"])
+    # Define a threshold value to binarize the lake raster
+    threshold = 0  # Adjust as needed based on your specific raster values
 
-    # Get the coordinates of lake cells
-    lake_cells = np.where(lake == 1)
+    # Binarize the lake raster using the threshold
+    binary_lake = lake > threshold
 
-    # Read data from each DEM file
-    for dem_file in dem_files:
-        with rasterio.open(dem_file) as dem_src:
-            # Iterate over each lake cell
-            for y, x in zip(*lake_cells):
-                # Define the window around the lake cell
-                window = Window(x - 1, y - 1, 3, 3)
+    # Label connected regions (clusters) in the binary lake raster
+    labeled_lake = label(binary_lake, connectivity=2)  # Set connectivity to 2 for diagonal connections
 
-                # Read the neighborhood values from the DEM
-                neighborhood_dem = dem_src.read(1, window=window)
+    # Initialize the output data array with zeros
+    output_data = np.zeros_like(lake)
 
-                # Create a mask for the neighborhood to avoid nodata values
-                neighborhood_mask = neighborhood_dem != dem_src.nodata
+    # Iterate over unique labels (clusters)
+    for cluster_label in np.unique(labeled_lake):
+        if cluster_label == 0:  # Skip background label (0)
+            continue
 
-                # Get the lowest elevation value in the neighborhood
-                lowest_elevation = get_lowest_neighbor_elevation(neighborhood_dem, neighborhood_mask)
+        print(cluster_label)
+        # Create a binary mask for the current cluster
+        cluster_mask = labeled_lake == cluster_label
 
-                # Set the lowest elevation value in the output raster
-                output_data[y, x] = lowest_elevation
+        # Erode the cluster mask to include diagonal cells
+        eroded_mask = erosion(cluster_mask, np.ones((3, 3)))
 
-# Update profile to match lake raster profile
-profile.update(dtype=profile["dtype"], count=1)
+        # Find the difference between the eroded mask and the original mask
+        outline = cluster_mask ^ eroded_mask
 
-# Write the output raster
+        # Assign the cluster label to the cells in the outline
+        output_data[outline] = cluster_label
+
+
 with rasterio.open(output_file, "w", **profile) as dst:
     dst.write(output_data, 1)
+
+"""
+with rasterio.open(lake_file) as lake_src:
+    lake = lake_src.read(1)  # Read lake raster data
+    profile = lake_src.profile  # Get profile from the lake raster for output raster
+
+    # Define a threshold value to binarize the lake raster
+    threshold = 0  # Adjust as needed based on your specific raster values
+
+    # Binarize the lake raster using the threshold
+    binary_lake = lake > threshold
+
+    # Label connected regions (clusters) in the binary lake raster
+    labeled_lake = label(binary_lake)
+
+    # Initialize the output data array with zeros
+    output_data = np.zeros_like(lake)
+
+    # Iterate over unique labels (clusters)
+    for cluster_label in np.unique(labeled_lake):
+        print(cluster_label)
+        if cluster_label == 0:  # Skip background label (0)
+            continue
+
+        # Create a binary mask for the current cluster
+        cluster_mask = labeled_lake == cluster_label
+
+        # Perform dilation to get the surrounding ring
+        ring = binary_dilation(cluster_mask) & ~cluster_mask
+
+        # Assign the cluster label to the cells in the ring
+        output_data[ring] = cluster_label
+
+# Write the output raster
+
+with rasterio.open(output_file, "w", **profile) as dst:
+    dst.write(output_data, 1)
+"""
