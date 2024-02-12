@@ -2,6 +2,7 @@ import rasterio
 import numpy as np
 from skimage.morphology import binary_dilation
 from skimage.measure import label
+from skimage.morphology import erosion, label
 
 lake_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/output_lakes_raster.tif"
 output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings.tif"
@@ -31,6 +32,8 @@ with rasterio.open(lake_file) as lake_src:
 
         # Create a binary mask for the current cluster
         cluster_mask = labeled_lake == cluster_label
+        # Erode the cluster mask to include diagonal cells
+        #eroded_mask = erosion(cluster_mask, np.ones((3, 3)))
 
         # Perform dilation to get the surrounding ring
         ring = binary_dilation(cluster_mask) & ~cluster_mask
