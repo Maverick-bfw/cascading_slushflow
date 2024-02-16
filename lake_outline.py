@@ -25,7 +25,8 @@ with rasterio.open(lake_file) as lake_src:
     for cluster_label in np.unique(labeled_lake):
         if cluster_label == 0:  # Skip background label (0)
             continue
-
+        if cluster_label > 60:
+            continue
 
         print(cluster_label)
         # Create a binary mask for the current cluster
