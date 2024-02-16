@@ -2,7 +2,7 @@ import rasterio
 import numpy as np
 from skimage.morphology import binary_dilation, erosion, label
 
-lake_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/output_lakes_raster.tif"
+lake_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/trimmed_lakes_raster.tif"
 output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings.tif"
 
 with rasterio.open(lake_file) as lake_src:
