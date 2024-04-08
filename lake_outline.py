@@ -4,9 +4,14 @@ from skimage.morphology import binary_dilation, erosion, label
 import revalue_rings
 lake_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/trimmed_lakes_raster.tif"
 output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/drainage.tif"
+dem_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/trimmed_DEM_raster.tif"
 
-with rasterio.open(lake_file) as lake_src:
+with rasterio.open(lake_file) as lake_src, rasterio.open(dem_file) as dem_src: # open lakes and dem files
     lake = lake_src.read(1)  # Read lake raster data
+    lake_transform = lake_src.transform
+    dem_data = dem_src.read(1)
+    dem_transform = dem_src.transform
+
     profile = lake_src.profile  # Get profile from the lake raster for output raster
 
     # Define a threshold value to binarize the lake raster
@@ -28,7 +33,7 @@ with rasterio.open(lake_file) as lake_src:
 
         print(cluster_label)
         # Create a binary mask for the current cluster
-        cluster_mask = labeled_lake == cluster_label
+        cluster_mask = labeled_lake != cluster_label
 
         # Erode the cluster mask to include diagonal cells
         eroded_mask = erosion(cluster_mask, np.ones((3, 3)))
