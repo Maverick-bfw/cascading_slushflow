@@ -1,5 +1,8 @@
 import rasterio
-
+"""
+This code calls in the lake rings, the DEM and then copies the extent of the rings but with the values of the DEM. 
+Output is rings_DEM.tif
+"""
 # Define paths to the output raster and DEM raster
 rings_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings.tif"
 dem_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/trimmed_DEM_raster.tif"
