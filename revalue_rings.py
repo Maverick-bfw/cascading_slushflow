@@ -6,7 +6,22 @@ Output is rings_DEM.tif
 # Define paths to the output raster and DEM raster
 rings_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings.tif"
 dem_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/trimmed_DEM_raster.tif"
-output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings_DEM.tif"
+output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings_DEM_test_function.tif"
+
+def revalue_cells(cells_greater_than_zero, output_transform, dem_transform, dem_data):
+    for row, col in zip(*cells_greater_than_zero.nonzero()):
+        # Get the coordinates of the cell in the output raster
+        output_coords = output_transform * (col, row)
+
+        # Convert output raster coordinates to DEM raster coordinates
+        dem_col, dem_row = ~dem_transform * output_coords
+
+        # Round DEM coordinates to integer indices
+        dem_col, dem_row = int(round(dem_col)), int(round(dem_row))
+
+        # Update the value of the cell in the output raster with the corresponding elevation value from the DEM
+        output_data[row, col] = dem_data[dem_row, dem_col]
+    return output_data
 
 # Open the output raster and DEM raster
 with rasterio.open(rings_file) as output_src, rasterio.open(dem_file) as dem_src:
@@ -20,18 +35,7 @@ with rasterio.open(rings_file) as output_src, rasterio.open(dem_file) as dem_src
     cells_greater_than_zero = output_data > 0
 
     # Loop over each cell with value greater than 0
-    for row, col in zip(*cells_greater_than_zero.nonzero()):
-        # Get the coordinates of the cell in the output raster
-        output_coords = output_transform * (col, row)
-
-        # Convert output raster coordinates to DEM raster coordinates
-        dem_col, dem_row = ~dem_transform * output_coords
-
-        # Round DEM coordinates to integer indices
-        dem_col, dem_row = int(round(dem_col)), int(round(dem_row))
-
-        # Update the value of the cell in the output raster with the corresponding elevation value from the DEM
-        output_data[row, col] = dem_data[dem_row, dem_col]
+    output_data = revalue_cells(cells_greater_than_zero,output_transform, dem_transform, dem_data)
 
 # Save the modified output raster
 with rasterio.open(output_file, 'w', driver='GTiff',

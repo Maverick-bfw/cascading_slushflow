@@ -1,9 +1,9 @@
 import rasterio
 import numpy as np
 from skimage.morphology import binary_dilation, erosion, label
-
+import revalue_rings
 lake_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/trimmed_lakes_raster.tif"
-output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/rings.tif"
+output_file = "/media/snowman/LaCie/cascading_slushflow/fonnbu/drainage.tif"
 
 with rasterio.open(lake_file) as lake_src:
     lake = lake_src.read(1)  # Read lake raster data
@@ -41,7 +41,8 @@ with rasterio.open(lake_file) as lake_src:
 
         # Perform dilation to get the surrounding ring
         ring = binary_dilation(cluster_mask) & ~cluster_mask
-
+        # this is where to revalue rings based on DEM
+        # this is where to find lowest values
         # Assign the cluster label to the cells in the ring
         output_data[ring] = cluster_label
 
