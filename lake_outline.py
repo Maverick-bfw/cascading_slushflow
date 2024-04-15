@@ -21,30 +21,14 @@ with rasterio.open(lake_file) as lake_src, rasterio.open(dem_file) as dem_src: #
     binary_lake = lake > threshold
     reversed_binary = np.invert(binary_lake)
     # Label connected regions (clusters) in the binary lake raster
-    labeled_lake = label(binary_lake, connectivity=2)  # Set connectivity to 2 for diagonal connections
+    #labeled_lake = label(binary_lake, connectivity=2)  # Set connectivity to 2 for diagonal connections
     mask = erosion(reversed_binary, np.ones((3,3)))
    #binary_extended_lakes = labeled_lake > threshold
     rings = np.invert(binary_lake ^ mask)
     # Initialize the output data array with zeros
-    output_data = np.zeros_like(lake)
-    """
-    # Iterate over unique labels (clusters)
-    for cluster_label in np.unique(labeled_lake):
-        if cluster_label == 0:  # Skip background label (0)
-            continue
-        if cluster_label > 10:
-            continue
-        print(cluster_label)
-    """
+    #output_data = np.zeros_like(lake)
 
-    # Create a binary mask for the current cluster
-    cluster_mask = labeled_lake != lake #cluster_label
-
-    # Erode the cluster mask to include diagonal cells
-    eroded_mask = erosion(cluster_mask, np.ones((3, 3)))
-
-    # Find the difference between the eroded mask and the original mask
-    outline = cluster_mask ^ eroded_mask
+    outline = label(rings, connectivity=2)
 
     # Assign the cluster label to the cells in the outline
     #output_data[outline] = cluster_label
@@ -55,6 +39,7 @@ with rasterio.open(lake_file) as lake_src, rasterio.open(dem_file) as dem_src: #
     ring = revalue_cells(outline, lake_transform, dem_transform, dem_data)
     # this is where to find lowest values
     # Assign the cluster label to the cells in the ring
+    output_data = np.zeros_like(lake)
     output_data = np.where(ring > 0, ring, output_data)
 
 
